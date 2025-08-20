@@ -19,47 +19,24 @@
     overflow: hidden;
     position: relative;
   }
-  h2 {
-    margin: 0 0 12px;
-    color: black;
-    text-shadow: none;
-  }
-  .wheel-selection {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 12px;
-  }
+  h2 { margin: 0 0 12px; color: black; text-shadow: none; }
+  .wheel-selection { display: flex; gap: 12px; margin-bottom: 12px; }
   .wheel-selection button {
-    padding: 8px 16px;
-    font-size: 16px;
-    font-weight: bold;
-    border: none;
-    border-radius: 25px;
+    padding: 8px 16px; font-size: 16px; font-weight: bold;
+    border: none; border-radius: 25px;
     background: linear-gradient(90deg, #6a0dad, #9b59b6);
-    color: #fff;
-    cursor: pointer;
+    color: #fff; cursor: pointer;
     transition: transform .15s ease, background .3s ease;
   }
   .wheel-selection button:hover { transform: scale(1.05); }
-  .wheel-wrap {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-  }
+  .wheel-wrap { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; }
   #pointer {
-    position: absolute;
-    top: -10px;
-    left: 50%;
-    transform: translateX(-50%) rotate(180deg);
+    position: absolute; top: -10px; left: 50%; transform: translateX(-50%) rotate(180deg);
     width: 0; height: 0;
-    border-left: 18px solid transparent;
-    border-right: 18px solid transparent;
+    border-left: 18px solid transparent; border-right: 18px solid transparent;
     border-bottom: 38px solid gold;
     filter: drop-shadow(0 3px 6px rgba(0,0,0,0.7));
-    animation: pulsePointer 1.2s infinite;
-    z-index: 2;
+    animation: pulsePointer 1.2s infinite; z-index: 2;
   }
   @keyframes pulsePointer {
     0%,100% { transform: translateX(-50%) rotate(180deg) scale(1); }
@@ -68,22 +45,16 @@
   canvas#wheel {
     border-radius: 50%;
     box-shadow: 0 0 25px rgba(255,255,255,0.2), inset 0 0 40px rgba(0,0,0,0.6);
-    display: block;
-    width: 380px;
-    height: 380px;
+    display: block; width: 380px; height: 380px;
     background: radial-gradient(circle, #111 70%, #000);
     transition: transform 0.4s ease;
   }
   canvas#wheel:hover { transform: scale(1.02); }
   #spin {
-    padding: 12px 24px;
-    font-size: 18px;
-    font-weight: bold;
-    border: none;
-    border-radius: 50px;
+    padding: 12px 24px; font-size: 18px; font-weight: bold;
+    border: none; border-radius: 50px;
     background: linear-gradient(90deg, #ff416c, #ff4b2b);
-    color: #fff;
-    cursor: pointer;
+    color: #fff; cursor: pointer;
     box-shadow: 0 5px 20px rgba(0,0,0,0.5), 0 0 15px rgba(255,75,43,0.7);
     transition: transform .15s ease, background .4s ease, box-shadow .4s ease;
   }
@@ -94,28 +65,11 @@
   }
   #spin:active { transform: scale(0.98); }
   #spin:disabled { opacity: 0.6; cursor: not-allowed; }
-  #result {
-    min-height: 1.4em;
-    font-size: 20px;
-    margin: 6px 0 0;
-    text-shadow: 0 0 8px #ffd700;
-    text-align: center;
-  }
-  .promo {
-    display: flex;
-    gap: 6px;
-    margin-top: 12px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
+  #result { min-height: 1.4em; font-size: 20px; margin: 6px 0 0; text-shadow: 0 0 8px #ffd700; text-align: center; }
+  .promo { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; justify-content: center; }
   .promo input {
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: none;
-    font-size: 14px;
-    background: rgba(255,255,255,0.1);
-    color: #fff;
-    outline: none;
+    padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px;
+    background: rgba(255,255,255,0.1); color: #fff; outline: none;
   }
   .promo input::placeholder { color: #ccc; }
 </style>
@@ -163,9 +117,6 @@ const wheels = {
 let sectors = [...wheels.purple];
 let angle = 0;
 let spinning = false;
-
-let validCodes = ['LUCKY1','SPINME','JACKPOT'];
-let usedCodes = [];
 
 function wrapText(context, text, x, y, maxWidth, lineHeight) {
   const words = text.split(' ');
@@ -223,12 +174,17 @@ function drawWheel() {
 }
 
 function sendResultToBot(prize) {
+  if (!tg.initDataUnsafe || !tg.initDataUnsafe.user) {
+    alert("❌ Открой колесо внутри Telegram!");
+    return;
+  }
   const user = tg.initDataUnsafe.user;
   const data = {
       prize: prize,
       user_id: user.id,
-      username: user.username,
-      first_name: user.first_name
+      username: user.username || "",
+      first_name: user.first_name || "Игрок",
+      promo_code: promoInput.value.trim().toUpperCase()
   };
   tg.sendData(JSON.stringify(data));
 }
@@ -237,11 +193,10 @@ function rotateWheel() {
   if (spinning) return;
 
   const code = promoInput.value.trim().toUpperCase();
-  if (!validCodes.includes(code) || usedCodes.includes(code)) {
-    alert('Неверный или уже использованный промокод!');
+  if (!code) {
+    alert('Введите промокод!');
     return;
   }
-  usedCodes.push(code);
 
   spinning = true;
   btn.disabled = true;
