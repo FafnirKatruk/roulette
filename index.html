@@ -11,7 +11,7 @@
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background: url("photo_2025-08-20_13-14-09.jpg") no-repeat center center / cover; /* фон-картинка */
+    background: url("photo_2025-08-20_13-14-09.jpg") no-repeat center center / cover;
     color: #fff;
     font-family: system-ui, sans-serif;
     margin: 0;
@@ -19,25 +19,27 @@
     overflow: hidden;
     position: relative;
   }
+  h2 { margin: 0 0 12px; color: black; text-shadow: none; text-align: center; }
 
-  h2 {
-    margin: 0 0 20px;
-    text-shadow: 0 0 10px #ffed75, 0 0 20px #ffed75;
-    animation: glowTitle 2s infinite alternate;
-  }
-  @keyframes glowTitle {
-    from { text-shadow: 0 0 5px #ffed75; }
-    to { text-shadow: 0 0 20px #ffed75, 0 0 30px #ffed75; }
-  }
-
-  .wheel-wrap {
-    position: relative;
+  .wheel-selection {
     display: flex;
-    flex-direction: column;
-    align-items: center;
     gap: 12px;
+    margin-bottom: 12px;
   }
+  .wheel-selection button {
+    padding: 8px 16px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 25px;
+    background: linear-gradient(90deg, #6a0dad, #9b59b6);
+    color: #fff;
+    cursor: pointer;
+    transition: transform .15s ease, background .3s ease;
+  }
+  .wheel-selection button:hover { transform: scale(1.05); }
 
+  .wheel-wrap { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; }
   #pointer {
     position: absolute;
     top: -10px;
@@ -51,27 +53,20 @@
     animation: pulsePointer 1.2s infinite;
     z-index: 2;
   }
-  @keyframes pulsePointer {
-    0%,100% { transform: translateX(-50%) rotate(180deg) scale(1); }
-    50% { transform: translateX(-50%) rotate(180deg) scale(1.1); }
-  }
+  @keyframes pulsePointer { 0%,100% { transform: translateX(-50%) rotate(180deg) scale(1); } 50% { transform: translateX(-50%) rotate(180deg) scale(1.1); } }
 
   canvas#wheel {
     border-radius: 50%;
-    box-shadow: 
-      0 0 25px rgba(255,255,255,0.2),
-      inset 0 0 40px rgba(0,0,0,0.6);
+    box-shadow: 0 0 25px rgba(255,255,255,0.2), inset 0 0 40px rgba(0,0,0,0.6);
     display: block;
     width: 380px;
     height: 380px;
     background: radial-gradient(circle, #111 70%, #000);
     transition: transform 0.4s ease;
   }
-  canvas#wheel:hover {
-    transform: scale(1.02);
-  }
+  canvas#wheel:hover { transform: scale(1.02); }
 
-  button {
+  #spin {
     padding: 12px 24px;
     font-size: 18px;
     font-weight: bold;
@@ -83,43 +78,25 @@
     box-shadow: 0 5px 20px rgba(0,0,0,0.5), 0 0 15px rgba(255,75,43,0.7);
     transition: transform .15s ease, background .4s ease, box-shadow .4s ease;
   }
-  button:hover {
-    transform: scale(1.05);
-    background: linear-gradient(90deg, #ff4b2b, #ff416c);
-    box-shadow: 0 5px 25px rgba(0,0,0,0.6), 0 0 25px rgba(255,75,43,0.9);
-  }
-  button:active { transform: scale(0.98); }
-  button:disabled { opacity: 0.6; cursor: not-allowed; }
+  #spin:hover { transform: scale(1.05); background: linear-gradient(90deg, #ff4b2b, #ff416c); box-shadow: 0 5px 25px rgba(0,0,0,0.6), 0 0 25px rgba(255,75,43,0.9); }
+  #spin:active { transform: scale(0.98); }
+  #spin:disabled { opacity: 0.6; cursor: not-allowed; }
 
-  #result {
-    min-height: 1.4em;
-    font-size: 20px;
-    margin: 6px 0 0;
-    text-shadow: 0 0 8px #ffd700;
-  }
+  #result { min-height: 1.4em; font-size: 20px; margin: 6px 0 0; text-shadow: 0 0 8px #ffd700; text-align: center; }
 
-  .controls {
-    display: flex;
-    gap: 6px;
-    margin-top: 12px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  input, select {
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: none;
-    font-size: 14px;
-    background: rgba(255,255,255,0.1);
-    color: #fff;
-    outline: none;
-  }
-  input::placeholder { color: #ccc; }
+  .promo { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; justify-content: center; }
+  .promo input { padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; background: rgba(255,255,255,0.1); color: #fff; outline: none; }
+  .promo input::placeholder { color: #ccc; }
 </style>
 </head>
 <body>
 
 <h2>Колесо фортуны 🎡</h2>
+
+<div class="wheel-selection">
+  <button data-wheel="purple">Фиолетовая коробка</button>
+  <button data-wheel="blue">Синяя коробка</button>
+</div>
 
 <div class="wheel-wrap">
   <div id="pointer"></div>
@@ -129,125 +106,149 @@
 
 <p id="result"></p>
 
-<div class="controls">
-  <input type="text" id="newPrize" placeholder="Новый приз">
-  <button id="addPrize">Добавить</button>
-  <select id="prizesSelect"></select>
-  <button id="removePrize">Удалить</button>
+<div class="promo">
+  <input type="text" id="promoCode" placeholder="Введите промокод">
 </div>
 
 <script>
-  // === КОЛЕСО ФОРТУНЫ ===
-  const canvas = document.getElementById('wheel');
-  const ctx = canvas.getContext('2d');
-  const result = document.getElementById('result');
-  const btn = document.getElementById('spin');
-  const newPrizeInput = document.getElementById('newPrize');
-  const addPrizeBtn = document.getElementById('addPrize');
-  const removePrizeBtn = document.getElementById('removePrize');
-  const prizesSelect = document.getElementById('prizesSelect');
+const tg = window.Telegram.WebApp;
+tg.expand();
 
-  const colors = ['#e74c3c','#3498db','#f1c40f','#2ecc71','#9b59b6','#e67e22','#1abc9c','#ff6b81','#ffa502','#3742fa'];
+const canvas = document.getElementById('wheel');
+const ctx = canvas.getContext('2d');
+const result = document.getElementById('result');
+const btn = document.getElementById('spin');
+const promoInput = document.getElementById('promoCode');
+const wheelButtons = document.querySelectorAll('.wheel-selection button');
 
-  let sectors = JSON.parse(localStorage.getItem('wheelSectors')) || ['100 монет','Пусто','+1','+5','Сюрприз','Попробуй снова','Джекпот!','-2'];
+const colors = ['#e74c3c','#3498db','#f1c40f','#2ecc71','#9b59b6','#e67e22','#1abc9c','#ff6b81','#ffa502','#3742fa'];
 
-  let angle = 0;
-  let spinning = false;
+const wheels = {
+  purple: ['1500 руб','1000 руб','700 руб','500 руб','х2 к выигрышу','х3 к выигрышу','именной винил + подписка на приватки'],
+  blue: ['1000 руб','500 руб','300 руб','х2 к выигрышу','х3 к выигрышу']
+};
 
-  function saveSectors() {
-    localStorage.setItem('wheelSectors', JSON.stringify(sectors));
+let sectors = [...wheels.purple];
+let angle = 0;
+let spinning = false;
+
+let validCodes = ['LUCKY1','SPINME','JACKPOT'];
+let usedCodes = [];
+
+function wrapText(context, text, x, y, maxWidth, lineHeight) {
+  const words = text.split(' ');
+  let line = '';
+  const lines = [];
+  for (let n = 0; n < words.length; n++) {
+    const testLine = line + words[n] + ' ';
+    const metrics = context.measureText(testLine);
+    const testWidth = metrics.width;
+    if (testWidth > maxWidth && n > 0) { lines.push(line); line = words[n] + ' '; }
+    else { line = testLine; }
   }
+  lines.push(line);
+  for (let i = 0; i < lines.length; i++) { context.fillText(lines[i], x, y + (i * lineHeight)); }
+}
 
-  function updatePrizesSelect() {
-    prizesSelect.innerHTML = '';
-    sectors.forEach((s, i) => {
-      const option = document.createElement('option');
-      option.value = i;
-      option.textContent = s;
-      prizesSelect.appendChild(option);
-    });
+function drawWheel() {
+  const radius = canvas.width / 2;
+  const arc = (2 * Math.PI) / sectors.length;
+  for (let i = 0; i < sectors.length; i++) {
+    const start = i * arc;
+    const g = ctx.createRadialGradient(radius, radius, 24, radius, radius, radius);
+    g.addColorStop(0, '#fff');
+    g.addColorStop(1, colors[i % colors.length]);
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(radius, radius);
+    ctx.arc(radius, radius, radius, start, start + arc);
+    ctx.lineTo(radius, radius);
+    ctx.fill();
+    ctx.strokeStyle = '#222'; 
+    ctx.lineWidth = 2; 
+    ctx.stroke();
+    ctx.save();
+    ctx.translate(radius, radius);
+    ctx.rotate(start + arc / 2);
+    ctx.textAlign = 'right'; 
+    ctx.fillStyle = '#fff'; 
+    ctx.font = 'bold 16px system-ui';
+    ctx.shadowColor = 'black'; 
+    ctx.shadowBlur = 4;
+    wrapText(ctx, sectors[i], radius - 16, -10, 100, 18);
+    ctx.restore();
   }
+  ctx.beginPath(); 
+  ctx.fillStyle = '#222'; 
+  ctx.arc(radius, radius, 22, 0, Math.PI * 2); 
+  ctx.fill();
+}
 
-  function drawWheel() {
-    const radius = canvas.width / 2;
-    const arc = (2 * Math.PI) / sectors.length;
-    for (let i = 0; i < sectors.length; i++) {
-      const start = i * arc;
-      const g = ctx.createRadialGradient(radius, radius, 24, radius, radius, radius);
-      g.addColorStop(0, '#fff');
-      g.addColorStop(1, colors[i % colors.length]);
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.moveTo(radius, radius);
-      ctx.arc(radius, radius, radius, start, start + arc);
-      ctx.lineTo(radius, radius);
-      ctx.fill();
-      ctx.strokeStyle = '#222'; ctx.lineWidth = 2; ctx.stroke();
-      ctx.save();
-      ctx.translate(radius, radius);
-      ctx.rotate(start + arc / 2);
-      ctx.textAlign = 'right'; ctx.fillStyle = '#fff'; ctx.font = 'bold 18px system-ui';
-      ctx.shadowColor = 'black'; ctx.shadowBlur = 4;
-      ctx.fillText(sectors[i], radius - 16, 6);
-      ctx.restore();
+// Отправка результата боту
+function sendResultToBot(prize) {
+  const user = tg.initDataUnsafe.user;
+  const data = {
+      prize: prize,
+      user_id: user.id,
+      username: user.username,
+      first_name: user.first_name
+  };
+  tg.sendData(JSON.stringify(data));
+}
+
+function rotateWheel() {
+  if (spinning) return;
+
+  const code = promoInput.value.trim().toUpperCase();
+  if (!validCodes.includes(code) || usedCodes.includes(code)) { alert('Неверный или уже использованный промокод!'); return; }
+  usedCodes.push(code);
+
+  spinning = true;
+  btn.disabled = true;
+  const randomSpin = Math.floor(Math.random() * 360) + 1440;
+  const finalAngle = angle + randomSpin;
+  const duration = 4200;
+  const startTime = performance.now();
+
+  function animate(now) {
+    const t = Math.min((now - startTime) / duration, 1);
+    const ease = 1 - Math.pow(1 - t, 4);
+    const currentAngle = angle + (finalAngle - angle) * ease;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save(); 
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(currentAngle * Math.PI / 180);
+    ctx.translate(-canvas.width / 2, -canvas.height / 2);
+    drawWheel(); 
+    ctx.restore();
+    if (t < 1) requestAnimationFrame(animate);
+    else {
+      angle = ((finalAngle % 360) + 360) % 360;
+      const sectorAngle = 360 / sectors.length;
+      const pointerAngle = 270;
+      const pickedIndex = Math.floor(((pointerAngle - angle + 360) % 360) / sectorAngle);
+      const prize = sectors[pickedIndex];
+      result.textContent = 'Выпало: ' + prize;
+
+      sendResultToBot(prize);
+
+      spinning = false; 
+      btn.disabled = false;
     }
-    ctx.beginPath(); ctx.fillStyle = '#222'; ctx.arc(radius, radius, 22, 0, Math.PI * 2); ctx.fill();
   }
+  requestAnimationFrame(animate);
+}
 
-  function rotateWheel() {
-    if (spinning) return;
-    spinning = true; btn.disabled = true;
-    const randomSpin = Math.floor(Math.random() * 360) + 1440;
-    const finalAngle = angle + randomSpin;
-    const duration = 4200;
-    const startTime = performance.now();
-
-    function animate(now) {
-      const t = Math.min((now - startTime) / duration, 1);
-      const ease = 1 - Math.pow(1 - t, 4);
-      const currentAngle = angle + (finalAngle - angle) * ease;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.save(); ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.rotate(currentAngle * Math.PI / 180);
-      ctx.translate(-canvas.width / 2, -canvas.height / 2);
-      drawWheel(); ctx.restore();
-      if (t < 1) requestAnimationFrame(animate);
-      else {
-        angle = ((finalAngle % 360) + 360) % 360;
-        const sectorAngle = 360 / sectors.length;
-        const pointerAngle = 270;
-        const pickedIndex = Math.floor(((pointerAngle - angle + 360) % 360) / sectorAngle);
-        result.textContent = 'Выпало: ' + sectors[pickedIndex];
-        spinning = false; btn.disabled = false;
-      }
-    }
-    requestAnimationFrame(animate);
-  }
-
-  addPrizeBtn.addEventListener('click', () => {
-    const val = newPrizeInput.value.trim();
-    if (val) {
-      sectors.push(val);
-      saveSectors();
-      updatePrizesSelect();
-      newPrizeInput.value = '';
-      drawWheel();
-    }
+wheelButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const wheel = btn.getAttribute('data-wheel');
+    sectors = [...wheels[wheel]];
+    drawWheel();
   });
+});
 
-  removePrizeBtn.addEventListener('click', () => {
-    const idx = parseInt(prizesSelect.value);
-    if (!isNaN(idx)) {
-      sectors.splice(idx, 1);
-      saveSectors();
-      updatePrizesSelect();
-      drawWheel();
-    }
-  });
-
-  updatePrizesSelect();
-  drawWheel();
-  btn.addEventListener('click', rotateWheel);
+drawWheel();
+btn.addEventListener('click', rotateWheel);
 </script>
 </body>
 </html>
