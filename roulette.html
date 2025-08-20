@@ -11,22 +11,13 @@
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background: #000;
+    background: url("photo_2025-08-20_13-14-09.jpg") no-repeat center center / cover; /* фон-картинка */
     color: #fff;
     font-family: system-ui, sans-serif;
     margin: 0;
     padding: 0;
     overflow: hidden;
     position: relative;
-  }
-
-  canvas#starfield {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-    background: radial-gradient(circle at center, #1b2735, #090a0f);
   }
 
   h2 {
@@ -128,8 +119,6 @@
 </head>
 <body>
 
-<canvas id="starfield"></canvas>
-
 <h2>Колесо фортуны 🎡</h2>
 
 <div class="wheel-wrap">
@@ -146,95 +135,6 @@
   <select id="prizesSelect"></select>
   <button id="removePrize">Удалить</button>
 </div>
-
-<script>
-  // === ЗВЁЗДНОЕ НЕБО ===
-  const starCanvas = document.getElementById("starfield");
-  const starCtx = starCanvas.getContext("2d");
-
-  let stars = [];
-  let shootingStars = [];
-  const numStars = 150;
-
-  function initStars() {
-    stars = [];
-    for (let i = 0; i < numStars; i++) {
-      stars.push({
-        x: Math.random() * starCanvas.width,
-        y: Math.random() * starCanvas.height,
-        radius: Math.random() * 1.5,
-        alpha: Math.random(),
-        speed: 0.015 + Math.random() * 0.025
-      });
-    }
-  }
-
-  function drawStars() {
-    starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
-    starCtx.fillStyle = "#fff";
-    stars.forEach(star => {
-      starCtx.globalAlpha = star.alpha;
-      starCtx.beginPath();
-      starCtx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-      starCtx.fill();
-    });
-  }
-
-  function updateStars() {
-    stars.forEach(star => {
-      star.alpha += star.speed * (Math.random() > 0.5 ? 1 : -1);
-      if (star.alpha <= 0) star.alpha = 0;
-      if (star.alpha >= 1) star.alpha = 1;
-    });
-  }
-
-  function spawnShootingStar() {
-    shootingStars.push({
-      x: Math.random() * starCanvas.width,
-      y: Math.random() * starCanvas.height / 2,
-      len: 200 + Math.random() * 100,
-      speed: 6 + Math.random() * 4,
-      opacity: 1
-    });
-  }
-
-  function drawShootingStars() {
-    for (let i = 0; i < shootingStars.length; i++) {
-      let s = shootingStars[i];
-      starCtx.strokeStyle = "rgba(255,255,255," + s.opacity + ")";
-      starCtx.lineWidth = 2;
-      starCtx.beginPath();
-      starCtx.moveTo(s.x, s.y);
-      starCtx.lineTo(s.x - s.len, s.y + s.len / 3);
-      starCtx.stroke();
-      s.x += -s.speed;
-      s.y += s.speed / 3;
-      s.opacity -= 0.02;
-      if (s.opacity <= 0) {
-        shootingStars.splice(i, 1);
-        i--;
-      }
-    }
-  }
-
-  function animateStars() {
-    drawStars();
-    updateStars();
-    drawShootingStars();
-    if (Math.random() < 0.005) spawnShootingStar();
-    requestAnimationFrame(animateStars);
-  }
-
-  function resizeCanvas() {
-    starCanvas.width = window.innerWidth;
-    starCanvas.height = window.innerHeight;
-    initStars();
-  }
-
-  window.addEventListener("resize", resizeCanvas);
-  resizeCanvas();
-  animateStars();
-</script>
 
 <script>
   // === КОЛЕСО ФОРТУНЫ ===
