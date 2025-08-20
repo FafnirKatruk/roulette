@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Колесо фортуны</title>
+<style>
+  body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: #000;
+    color: #fff;
+    font-family: system-ui, sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  canvas#starfield {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: radial-gradient(circle at center, #1b2735, #090a0f);
+  }
+
+  h2 {
+    margin: 0 0 20px;
+    text-shadow: 0 0 10px #ffed75, 0 0 20px #ffed75;
+    animation: glowTitle 2s infinite alternate;
+  }
+  @keyframes glowTitle {
+    from { text-shadow: 0 0 5px #ffed75; }
+    to { text-shadow: 0 0 20px #ffed75, 0 0 30px #ffed75; }
+  }
+
+  .wheel-wrap {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  #pointer {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%) rotate(180deg);
+    width: 0; height: 0;
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-bottom: 38px solid gold;
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,0.7));
+    animation: pulsePointer 1.2s infinite;
+    z-index: 2;
+  }
+  @keyframes pulsePointer {
+    0%,100% { transform: translateX(-50%) rotate(180deg) scale(1); }
+    50% { transform: translateX(-50%) rotate(180deg) scale(1.1); }
+  }
+
+  canvas#wheel {
+    border-radius: 50%;
+    box-shadow: 
+      0 0 25px rgba(255,255,255,0.2),
+      inset 0 0 40px rgba(0,0,0,0.6);
+    display: block;
+    width: 380px;
+    height: 380px;
+    background: radial-gradient(circle, #111 70%, #000);
+    transition: transform 0.4s ease;
+  }
+  canvas#wheel:hover {
+    transform: scale(1.02);
+  }
+
+  button {
+    padding: 12px 24px;
+    font-size: 18px;
+    font-weight: bold;
+    border: none;
+    border-radius: 50px;
+    background: linear-gradient(90deg, #ff416c, #ff4b2b);
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.5), 0 0 15px rgba(255,75,43,0.7);
+    transition: transform .15s ease, background .4s ease, box-shadow .4s ease;
+  }
+  button:hover {
+    transform: scale(1.05);
+    background: linear-gradient(90deg, #ff4b2b, #ff416c);
+    box-shadow: 0 5px 25px rgba(0,0,0,0.6), 0 0 25px rgba(255,75,43,0.9);
+  }
+  button:active { transform: scale(0.98); }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  #result {
+    min-height: 1.4em;
+    font-size: 20px;
+    margin: 6px 0 0;
+    text-shadow: 0 0 8px #ffd700;
+  }
+
+  .controls {
+    display: flex;
+    gap: 6px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  input, select {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    font-size: 14px;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    outline: none;
+  }
+  input::placeholder { color: #ccc; }
+</style>
+</head>
+<body>
+
+<canvas id="starfield"></canvas>
+
+<h2>Колесо фортуны 🎡</h2>
+
+<div class="wheel-wrap">
+  <div id="pointer"></div>
+  <canvas id="wheel" width="420" height="420" aria-label="Колесо фортуны"></canvas>
+  <button id="spin">Крутить</button>
+</div>
+
+<p id="result"></p>
+
+<div class="controls">
+  <input type="text" id="newPrize" placeholder="Новый приз">
+  <button id="addPrize">Добавить</button>
+  <select id="prizesSelect"></select>
+  <button id="removePrize">Удалить</button>
+</div>
+
+<script>
+  // === ЗВЁЗДНОЕ НЕБО ===
+  const starCanvas = document.getElementById("starfield");
+  const starCtx = starCanvas.getContext("2d");
+
+  let stars = [];
+  let shootingStars = [];
+  const numStars = 150;
+
+  function initStars() {
+    stars = [];
+    for (let i = 0; i < numStars; i++) {
+      stars.push({
+        x: Math.random() * starCanvas.width,
+        y: Math.random() * starCanvas.height,
+        radius: Math.random() * 1.5,
+        alpha: Math.random(),
+        speed: 0.015 + Math.random() * 0.025
+      });
+    }
+  }
+
+  function drawStars() {
+    starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
+    starCtx.fillStyle = "#fff";
+    stars.forEach(star => {
+      starCtx.globalAlpha = star.alpha;
+      starCtx.beginPath();
+      starCtx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+      starCtx.fill();
+    });
+  }
+
+  function updateStars() {
+    stars.forEach(star => {
+      star.alpha += star.speed * (Math.random() > 0.5 ? 1 : -1);
+      if (star.alpha <= 0) star.alpha = 0;
+      if (star.alpha >= 1) star.alpha = 1;
+    });
+  }
+
+  function spawnShootingStar() {
+    shootingStars.push({
+      x: Math.random() * starCanvas.width,
+      y: Math.random() * starCanvas.height / 2,
+      len: 200 + Math.random() * 100,
+      speed: 6 + Math.random() * 4,
+      opacity: 1
+    });
+  }
+
+  function drawShootingStars() {
+    for (let i = 0; i < shootingStars.length; i++) {
+      let s = shootingStars[i];
+      starCtx.strokeStyle = "rgba(255,255,255," + s.opacity + ")";
+      starCtx.lineWidth = 2;
+      starCtx.beginPath();
+      starCtx.moveTo(s.x, s.y);
+      starCtx.lineTo(s.x - s.len, s.y + s.len / 3);
+      starCtx.stroke();
+      s.x += -s.speed;
+      s.y += s.speed / 3;
+      s.opacity -= 0.02;
+      if (s.opacity <= 0) {
+        shootingStars.splice(i, 1);
+        i--;
+      }
+    }
+  }
+
+  function animateStars() {
+    drawStars();
+    updateStars();
+    drawShootingStars();
+    if (Math.random() < 0.005) spawnShootingStar();
+    requestAnimationFrame(animateStars);
+  }
+
+  function resizeCanvas() {
+    starCanvas.width = window.innerWidth;
+    starCanvas.height = window.innerHeight;
+    initStars();
+  }
+
+  window.addEventListener("resize", resizeCanvas);
+  resizeCanvas();
+  animateStars();
+</script>
+
+<script>
+  // === КОЛЕСО ФОРТУНЫ ===
+  const canvas = document.getElementById('wheel');
+  const ctx = canvas.getContext('2d');
+  const result = document.getElementById('result');
+  const btn = document.getElementById('spin');
+  const newPrizeInput = document.getElementById('newPrize');
+  const addPrizeBtn = document.getElementById('addPrize');
+  const removePrizeBtn = document.getElementById('removePrize');
+  const prizesSelect = document.getElementById('prizesSelect');
+
+  const colors = ['#e74c3c','#3498db','#f1c40f','#2ecc71','#9b59b6','#e67e22','#1abc9c','#ff6b81','#ffa502','#3742fa'];
+
+  let sectors = JSON.parse(localStorage.getItem('wheelSectors')) || ['100 монет','Пусто','+1','+5','Сюрприз','Попробуй снова','Джекпот!','-2'];
+
+  let angle = 0;
+  let spinning = false;
+
+  function saveSectors() {
+    localStorage.setItem('wheelSectors', JSON.stringify(sectors));
+  }
+
+  function updatePrizesSelect() {
+    prizesSelect.innerHTML = '';
+    sectors.forEach((s, i) => {
+      const option = document.createElement('option');
+      option.value = i;
+      option.textContent = s;
+      prizesSelect.appendChild(option);
+    });
+  }
+
+  function drawWheel() {
+    const radius = canvas.width / 2;
+    const arc = (2 * Math.PI) / sectors.length;
+    for (let i = 0; i < sectors.length; i++) {
+      const start = i * arc;
+      const g = ctx.createRadialGradient(radius, radius, 24, radius, radius, radius);
+      g.addColorStop(0, '#fff');
+      g.addColorStop(1, colors[i % colors.length]);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(radius, radius);
+      ctx.arc(radius, radius, radius, start, start + arc);
+      ctx.lineTo(radius, radius);
+      ctx.fill();
+      ctx.strokeStyle = '#222'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.save();
+      ctx.translate(radius, radius);
+      ctx.rotate(start + arc / 2);
+      ctx.textAlign = 'right'; ctx.fillStyle = '#fff'; ctx.font = 'bold 18px system-ui';
+      ctx.shadowColor = 'black'; ctx.shadowBlur = 4;
+      ctx.fillText(sectors[i], radius - 16, 6);
+      ctx.restore();
+    }
+    ctx.beginPath(); ctx.fillStyle = '#222'; ctx.arc(radius, radius, 22, 0, Math.PI * 2); ctx.fill();
+  }
+
+  function rotateWheel() {
+    if (spinning) return;
+    spinning = true; btn.disabled = true;
+    const randomSpin = Math.floor(Math.random() * 360) + 1440;
+    const finalAngle = angle + randomSpin;
+    const duration = 4200;
+    const startTime = performance.now();
+
+    function animate(now) {
+      const t = Math.min((now - startTime) / duration, 1);
+      const ease = 1 - Math.pow(1 - t, 4);
+      const currentAngle = angle + (finalAngle - angle) * ease;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save(); ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate(currentAngle * Math.PI / 180);
+      ctx.translate(-canvas.width / 2, -canvas.height / 2);
+      drawWheel(); ctx.restore();
+      if (t < 1) requestAnimationFrame(animate);
+      else {
+        angle = ((finalAngle % 360) + 360) % 360;
+        const sectorAngle = 360 / sectors.length;
+        const pointerAngle = 270;
+        const pickedIndex = Math.floor(((pointerAngle - angle + 360) % 360) / sectorAngle);
+        result.textContent = 'Выпало: ' + sectors[pickedIndex];
+        spinning = false; btn.disabled = false;
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+
+  addPrizeBtn.addEventListener('click', () => {
+    const val = newPrizeInput.value.trim();
+    if (val) {
+      sectors.push(val);
+      saveSectors();
+      updatePrizesSelect();
+      newPrizeInput.value = '';
+      drawWheel();
+    }
+  });
+
+  removePrizeBtn.addEventListener('click', () => {
+    const idx = parseInt(prizesSelect.value);
+    if (!isNaN(idx)) {
+      sectors.splice(idx, 1);
+      saveSectors();
+      updatePrizesSelect();
+      drawWheel();
+    }
+  });
+
+  updatePrizesSelect();
+  drawWheel();
+  btn.addEventListener('click', rotateWheel);
+</script>
+</body>
+</html>
