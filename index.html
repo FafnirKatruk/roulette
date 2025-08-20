@@ -19,8 +19,11 @@
     overflow: hidden;
     position: relative;
   }
-  h2 { margin: 0 0 12px; color: black; text-shadow: none; text-align: center; }
-
+  h2 {
+    margin: 0 0 12px;
+    color: black;
+    text-shadow: none;
+  }
   .wheel-selection {
     display: flex;
     gap: 12px;
@@ -38,8 +41,13 @@
     transition: transform .15s ease, background .3s ease;
   }
   .wheel-selection button:hover { transform: scale(1.05); }
-
-  .wheel-wrap { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .wheel-wrap {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
   #pointer {
     position: absolute;
     top: -10px;
@@ -53,8 +61,10 @@
     animation: pulsePointer 1.2s infinite;
     z-index: 2;
   }
-  @keyframes pulsePointer { 0%,100% { transform: translateX(-50%) rotate(180deg) scale(1); } 50% { transform: translateX(-50%) rotate(180deg) scale(1.1); } }
-
+  @keyframes pulsePointer {
+    0%,100% { transform: translateX(-50%) rotate(180deg) scale(1); }
+    50% { transform: translateX(-50%) rotate(180deg) scale(1.1); }
+  }
   canvas#wheel {
     border-radius: 50%;
     box-shadow: 0 0 25px rgba(255,255,255,0.2), inset 0 0 40px rgba(0,0,0,0.6);
@@ -65,7 +75,6 @@
     transition: transform 0.4s ease;
   }
   canvas#wheel:hover { transform: scale(1.02); }
-
   #spin {
     padding: 12px 24px;
     font-size: 18px;
@@ -78,14 +87,36 @@
     box-shadow: 0 5px 20px rgba(0,0,0,0.5), 0 0 15px rgba(255,75,43,0.7);
     transition: transform .15s ease, background .4s ease, box-shadow .4s ease;
   }
-  #spin:hover { transform: scale(1.05); background: linear-gradient(90deg, #ff4b2b, #ff416c); box-shadow: 0 5px 25px rgba(0,0,0,0.6), 0 0 25px rgba(255,75,43,0.9); }
+  #spin:hover {
+    transform: scale(1.05);
+    background: linear-gradient(90deg, #ff4b2b, #ff416c);
+    box-shadow: 0 5px 25px rgba(0,0,0,0.6), 0 0 25px rgba(255,75,43,0.9);
+  }
   #spin:active { transform: scale(0.98); }
   #spin:disabled { opacity: 0.6; cursor: not-allowed; }
-
-  #result { min-height: 1.4em; font-size: 20px; margin: 6px 0 0; text-shadow: 0 0 8px #ffd700; text-align: center; }
-
-  .promo { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; justify-content: center; }
-  .promo input { padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; background: rgba(255,255,255,0.1); color: #fff; outline: none; }
+  #result {
+    min-height: 1.4em;
+    font-size: 20px;
+    margin: 6px 0 0;
+    text-shadow: 0 0 8px #ffd700;
+    text-align: center;
+  }
+  .promo {
+    display: flex;
+    gap: 6px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .promo input {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    font-size: 14px;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    outline: none;
+  }
   .promo input::placeholder { color: #ccc; }
 </style>
 </head>
@@ -110,6 +141,7 @@
   <input type="text" id="promoCode" placeholder="Введите промокод">
 </div>
 
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
 const tg = window.Telegram.WebApp;
 tg.expand();
@@ -143,11 +175,17 @@ function wrapText(context, text, x, y, maxWidth, lineHeight) {
     const testLine = line + words[n] + ' ';
     const metrics = context.measureText(testLine);
     const testWidth = metrics.width;
-    if (testWidth > maxWidth && n > 0) { lines.push(line); line = words[n] + ' '; }
-    else { line = testLine; }
+    if (testWidth > maxWidth && n > 0) {
+      lines.push(line);
+      line = words[n] + ' ';
+    } else {
+      line = testLine;
+    }
   }
   lines.push(line);
-  for (let i = 0; i < lines.length; i++) { context.fillText(lines[i], x, y + (i * lineHeight)); }
+  for (let i = 0; i < lines.length; i++) {
+    context.fillText(lines[i], x, y + (i * lineHeight));
+  }
 }
 
 function drawWheel() {
@@ -184,7 +222,6 @@ function drawWheel() {
   ctx.fill();
 }
 
-// Отправка результата боту
 function sendResultToBot(prize) {
   const user = tg.initDataUnsafe.user;
   const data = {
@@ -200,7 +237,10 @@ function rotateWheel() {
   if (spinning) return;
 
   const code = promoInput.value.trim().toUpperCase();
-  if (!validCodes.includes(code) || usedCodes.includes(code)) { alert('Неверный или уже использованный промокод!'); return; }
+  if (!validCodes.includes(code) || usedCodes.includes(code)) {
+    alert('Неверный или уже использованный промокод!');
+    return;
+  }
   usedCodes.push(code);
 
   spinning = true;
@@ -229,9 +269,7 @@ function rotateWheel() {
       const pickedIndex = Math.floor(((pointerAngle - angle + 360) % 360) / sectorAngle);
       const prize = sectors[pickedIndex];
       result.textContent = 'Выпало: ' + prize;
-
       sendResultToBot(prize);
-
       spinning = false; 
       btn.disabled = false;
     }
