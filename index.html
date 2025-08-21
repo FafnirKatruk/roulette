@@ -72,11 +72,9 @@
   const promoInput = document.getElementById('promoCode');
 
   const colors = ['#e74c3c','#3498db','#f1c40f','#2ecc71','#9b59b6','#e67e22','#1abc9c','#ff6b81','#ffa502','#3742fa'];
-
   const sectors = ['1500 руб','1000 руб','700 руб','500 руб','х2 к выигрышу','х3 к выигрышу','именной винил + подписка'];
   let spinning = false;
 
-  // ======= рисование =======
   function wrapText(context, text, x, y, maxWidth, lineHeight) {
     const words = text.split(' ');
     let line = '';
@@ -101,7 +99,6 @@
     const radius = canvas.width / 2;
     const arc = (2 * Math.PI) / sectors.length;
     ctx.clearRect(0,0,canvas.width,canvas.height);
-
     for (let i = 0; i < sectors.length; i++) {
       const start = i * arc + angle;
       const g = ctx.createRadialGradient(radius, radius, 24, radius, radius, radius);
@@ -132,7 +129,6 @@
     ctx.fill();
   }
 
-  // ======= вращение =======
   function rotateWheel() {
     if (spinning) return;
     spinning = true;
@@ -168,25 +164,25 @@
     spinning = false;
   }
 
-  // ======= связь с ботом =======
+  // ======= проверка промокода =======
   checkBtn.addEventListener('click', () => {
     const code = promoInput.value.trim().toUpperCase();
-    if (!code) {
-      alert("Введите промокод!");
-      return;
-    }
+    if (!code) { alert("Введите промокод!"); return; }
 
-    tg.sendData(JSON.stringify({ check_promo: code }));
-    alert("✅ Промокод отправлен, смотри ответ в чате с ботом. Если код верный, вернись и жми 'Крутить'.");
+    // отправка на проверку боту
+    tg.sendData(JSON.stringify({ action: "check_promo", promo: code }));
 
-    // здесь НЕ даём сразу крутить
-    // кнопку включишь вручную после подтверждения
-    spinBtn.disabled = false;
+    // пока ждём ответа от бота
+    spinBtn.disabled = true;
+    alert("✅ Промокод отправлен, дождитесь ответа в чате с ботом.");
   });
 
-  spinBtn.addEventListener('click', rotateWheel);
+  // функция отправки результата
+  function sendResultToBot(prize) {
+    const code = promoInput.value.trim().toUpperCase();
+    tg.sendData(JSON.stringify({ action: "save_result", promo: code, prize }));
+  }
 
-  // ======= init =======
   drawWheel();
   </script>
 </body>
