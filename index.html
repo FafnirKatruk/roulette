@@ -142,7 +142,7 @@
     btn.disabled = true;
 
     const arc = (2 * Math.PI) / sectors.length;
-    const spinAngle = Math.random() * sectors.length * arc + 10 * Math.PI; // минимум 5 оборотов
+    const spinAngle = Math.random() * sectors.length * arc + 10 * Math.PI;
     let current = 0;
     const duration = 5000;
     const start = performance.now();
@@ -184,19 +184,21 @@
       return;
     }
 
-    // отправляем запрос проверки промо
-    tg.sendData(JSON.stringify({ check_promo: code }));
-
-    // ⚠️ дальше крутить только если бот подтвердил
-    // пока имитация: даём крутить через 1с
-    setTimeout(() => {
-      rotateWheel();
-    }, 1000);
+    // Отправляем в бота запрос на проверку
+    tg.sendData(JSON.stringify({ action: "check", promo_code: code }));
   }
+
+  // Бот отвечает через showPopup или showAlert
+  tg.onEvent("popupClosed", (res) => {
+    if (res.button_id === "ok") {
+      rotateWheel();
+    }
+  });
 
   function sendResultToBot(prize) {
     const user = tg.initDataUnsafe.user;
     const data = {
+      action: "result",
       prize: prize,
       user_id: user.id,
       username: user.username || "",
@@ -212,6 +214,3 @@
   </script>
 </body>
 </html>
-
-
-
