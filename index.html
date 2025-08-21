@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Колесо фортуны</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     body {
       display: flex;
@@ -14,7 +13,7 @@
       margin: 0;
       font-family: system-ui, sans-serif;
       background: #111;
-      color: #fff;
+      color: white;
     }
     canvas {
       border-radius: 50%;
@@ -45,20 +44,18 @@
       cursor: pointer;
     }
     button:disabled {
-      opacity: .5;
+      opacity: 0.5;
       cursor: not-allowed;
     }
-    .hint { opacity:.85; font-size: 14px; margin-top: 6px; }
   </style>
 </head>
 <body>
-  <canvas id="wheel" width="400" height="400" aria-label="Колесо"></canvas>
+  <canvas id="wheel" width="400" height="400"></canvas>
   <div id="result"></div>
 
   <div class="controls">
-    <input id="promoCode" type="text" placeholder="Введите промокод" />
+    <input id="promoCode" type="text" placeholder="Введите промокод">
     <button id="spin">Крутить</button>
-    <div class="hint">Промокод можно использовать один раз на аккаунт Telegram</div>
   </div>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -72,54 +69,41 @@
   const btn = document.getElementById('spin');
   const promoInput = document.getElementById('promoCode');
 
-  // ------- цвета и сектора -------
   const colors = ['#e74c3c','#3498db','#f1c40f','#2ecc71','#9b59b6','#e67e22','#1abc9c','#ff6b81','#ffa502','#3742fa'];
-  const sectors = ['1500 руб','1000 руб','700 руб','500 руб','х2 к выигрышу','х3 к выигрышу','именной винил + подписка'];
 
+  const wheels = {
+    purple: ['1500 руб','1000 руб','700 руб','500 руб','х2 к выигрышу','х3 к выигрышу','именной винил + подписка'],
+    blue: ['1000 руб','500 руб','300 руб','х2 к выигрышу','х3 к выигрышу']
+  };
+
+  let sectors = [...wheels.purple];
   let spinning = false;
 
-  // ------- CloudStorage helpers (fallback на localStorage) -------
-  const CS = tg.CloudStorage;
-  function csGet(key) {
-    return new Promise((resolve) => {
-      if (!CS || !CS.getItem) return resolve(localStorage.getItem(key));
-      CS.getItem(key, (err, value) => { resolve(err ? null : value); });
-    });
-  }
-  function csSet(key, value) {
-    return new Promise((resolve) => {
-      if (!CS || !CS.setItem) {
-        localStorage.setItem(key, value);
-        return resolve(true);
-      }
-      CS.setItem(key, value, (err) => { resolve(!err); });
-    });
-  }
-
-  // ------- Отрисовка колеса -------
+  // ======= рисование =======
   function wrapText(context, text, x, y, maxWidth, lineHeight) {
     const words = text.split(' ');
     let line = '';
     const lines = [];
     for (let n = 0; n < words.length; n++) {
-      const test = line + words[n] + ' ';
-      if (context.measureText(test).width > maxWidth && n > 0) {
+      const testLine = line + words[n] + ' ';
+      const metrics = context.measureText(testLine);
+      if (metrics.width > maxWidth && n > 0) {
         lines.push(line);
         line = words[n] + ' ';
       } else {
-        line = test;
+        line = testLine;
       }
     }
     lines.push(line);
     for (let i = 0; i < lines.length; i++) {
-      context.fillText(lines[i], x, y + i * lineHeight);
+      context.fillText(lines[i], x, y + (i * lineHeight));
     }
   }
 
-  function drawWheel(angle = 0) {
+  function drawWheel(angle=0) {
     const radius = canvas.width / 2;
     const arc = (2 * Math.PI) / sectors.length;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
 
     for (let i = 0; i < sectors.length; i++) {
       const start = i * arc + angle;
@@ -134,43 +118,42 @@
       ctx.fill();
       ctx.strokeStyle = '#222';
       ctx.stroke();
-
       ctx.save();
       ctx.translate(radius, radius);
-      ctx.rotate(start + arc / 2);
+      ctx.rotate(start + arc/2);
       ctx.textAlign = 'right';
       ctx.fillStyle = '#fff';
       ctx.font = 'bold 16px system-ui';
       ctx.shadowColor = 'black';
       ctx.shadowBlur = 4;
-      wrapText(ctx, sectors[i], radius - 16, -10, 100, 18);
+      wrapText(ctx, sectors[i], radius-16, -10, 100, 18);
       ctx.restore();
     }
     ctx.beginPath();
     ctx.fillStyle = '#222';
-    ctx.arc(radius, radius, 22, 0, Math.PI * 2);
+    ctx.arc(radius, radius, 22, 0, Math.PI*2);
     ctx.fill();
   }
 
-  // ------- Вращение/завершение -------
+  // ======= вращение =======
   function rotateWheel() {
     if (spinning) return;
     spinning = true;
     btn.disabled = true;
 
     const arc = (2 * Math.PI) / sectors.length;
-    const spinAngle = Math.random() * sectors.length * arc + 10 * Math.PI; // минимум ~5 оборотов
+    const spinAngle = Math.random() * sectors.length * arc + 10 * Math.PI; // минимум 5 оборотов
     let current = 0;
     const duration = 5000;
     const start = performance.now();
 
     function animate(now) {
-      const t = Math.min((now - start) / duration, 1);
-      // плавное замедление
-      current = spinAngle * (t) * (1 - Math.pow(t, 3));
-      drawWheel(current);
-      if (t < 1) requestAnimationFrame(animate);
-      else {
+      const elapsed = now - start;
+      if (elapsed < duration) {
+        current = spinAngle * (elapsed/duration) * (1 - Math.pow(elapsed/duration, 3));
+        drawWheel(current);
+        requestAnimationFrame(animate);
+      } else {
         current = spinAngle;
         drawWheel(current);
         finish(current);
@@ -181,62 +164,49 @@
 
   function finish(angle) {
     const arc = (2 * Math.PI) / sectors.length;
-    const idx = Math.floor((sectors.length - (angle % (2 * Math.PI)) / arc) % sectors.length);
-    const prize = sectors[idx];
+    const index = Math.floor((sectors.length - (angle % (2*Math.PI)) / arc) % sectors.length);
+    const prize = sectors[index];
     result.innerText = "Выпало: " + prize;
-    sendResultToBot(prize).finally(() => {
-      // помечаем промокод использованным в облачном хранилище
-      const code = promoInput.value.trim().toUpperCase();
-      if (code) csSet(`used:${code}`, '1');
-      spinning = false;
-      btn.disabled = false;
-    });
+    sendResultToBot(prize);
+    spinning = false;
   }
 
-  // ------- Связь с ботом -------
-  async function checkPromoAndSpin() {
+  // ======= связь с ботом =======
+  function checkPromoAndSpin() {
     const code = promoInput.value.trim().toUpperCase();
-
     if (!code) {
       alert("Введите промокод!");
       return;
     }
-    const user = tg.initDataUnsafe && tg.initDataUnsafe.user;
-    if (!user || !user.id) {
+
+    if (!tg.initDataUnsafe || !tg.initDataUnsafe.user) {
       alert("❌ Открой колесо внутри Telegram!");
       return;
     }
 
-    // Клиентская защита: блокируем повтор по CloudStorage (переживёт перезагрузку)
-    const already = await csGet(`used:${code}`);
-    if (already === '1') {
-      tg.showAlert("Этот промокод уже использован на вашем аккаунте.");
-      return;
-    }
+    // отправляем запрос проверки промо
+    tg.sendData(JSON.stringify({ check_promo: code }));
 
-    rotateWheel(); // запускаем анимацию
+    // ⚠️ дальше крутить только если бот подтвердил
+    // пока имитация: даём крутить через 1с
+    setTimeout(() => {
+      rotateWheel();
+    }, 1000);
   }
 
   function sendResultToBot(prize) {
-    return new Promise((resolve) => {
-      const user = tg.initDataUnsafe.user;
-      const payload = {
-        prize,
-        user_id: user.id,
-        username: user.username || "",
-        first_name: user.first_name || "Игрок",
-        promo_code: promoInput.value.trim().toUpperCase()
-      };
-      try {
-        tg.sendData(JSON.stringify(payload));
-      } catch (e) {
-        console.error("sendData error:", e);
-      }
-      resolve();
-    });
+    const user = tg.initDataUnsafe.user;
+    const data = {
+      prize: prize,
+      user_id: user.id,
+      username: user.username || "",
+      first_name: user.first_name || "Игрок",
+      promo_code: promoInput.value.trim().toUpperCase()
+    };
+    tg.sendData(JSON.stringify(data));
   }
 
-  // ------- init -------
+  // ======= init =======
   drawWheel();
   btn.addEventListener('click', checkPromoAndSpin);
   </script>
